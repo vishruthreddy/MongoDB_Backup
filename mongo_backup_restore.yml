@@ -1,0 +1,29 @@
+---
+- name: MongoDB Backup and Restore
+  hosts: n1
+  become: yes
+  vars:
+    backup_dir: /backup/mongo_backups
+  tasks:
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0700'
+
+    - name: Copy backup or restore script
+      copy:
+        src: "{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0755'
+      loop:
+        - mongo_backup.sh
+        - mongo_restore.sh
+
+    - name: Run backup script
+      shell: /usr/local/bin/mongo_backup.sh
+      when: mode == "backup"
+
+    - name: Run restore script
+      shell: "/usr/local/bin/mongo_restore.sh {{ backup_date }}"
+      when: mode == "restore"
